@@ -38,7 +38,25 @@ def publicar(item):
         time.sleep(5)
     return call("POST", f"{IG_ID}/media_publish", creation_id=cont)["id"]
 
+def validar():
+    """Cria o container de um story de teste SEM publicar: confere chave, permissões e acesso à imagem."""
+    res = {}
+    try:
+        res["conta"] = call("GET", IG_ID, fields="username")
+        cont = call("POST", f"{IG_ID}/media", image_url=RAW + "artes/teste/teste.jpg", media_type="STORIES")["id"]
+        for _ in range(12):
+            st = call("GET", cont, fields="status_code").get("status_code")
+            if st in ("FINISHED", "ERROR"): break
+            time.sleep(5)
+        res["container"] = st
+    except Exception as e:
+        res["erro"] = str(e)[:400]
+    json.dump(res, open("validacao.json", "w"), ensure_ascii=False, indent=1)
+    print(res)
+
 def main():
+    if "--validar" in sys.argv:
+        return validar()
     teste = "--teste" in sys.argv
     agora = datetime.now(BRT)
     mudou = False
