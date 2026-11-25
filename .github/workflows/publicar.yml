@@ -1,28 +1,37 @@
 name: Publicar no Instagram
+# O agendador do GitHub atrasa (costuma rodar ~1x por hora). Por isso cada execução fica
+# ~70 min de plantão, conferindo a fila a cada minuto, e publica cada item na hora certa.
 on:
   schedule:
     - cron: "*/15 * * * *"
+  push:
+    branches: [main]
+    paths: ["fila/**"]
   workflow_dispatch:
-    inputs:
-      teste:
-        description: "Publicar agora o próximo item da fila (teste)"
-        type: boolean
-        default: false
 permissions:
   contents: write
-concurrency: publicar
+concurrency:
+  group: publicar
+  cancel-in-progress: false
 jobs:
   publicar:
     runs-on: ubuntu-latest
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v4
-      - name: Publicar o que chegou a hora
+      - name: Plantão de publicação (70 min)
         env:
           IG_TOKEN: ${{ secrets.IG_TOKEN }}
-        run: python3 publicar.py ${{ inputs.teste && '--teste' || '' }}
-      - name: Salvar status da fila
         run: |
           git config user.name "auto-brasil-bot"
           git config user.email "bot@users.noreply.github.com"
-          git add fila
-          git diff --cached --quiet || (git commit -m "Atualiza status da fila" && git pull --rebase && git push)
+          for i in $(seq 1 70); do
+            git pull -q --rebase origin main || true
+            python3 publicar.py
+            git add fila
+            if ! git diff --cached --quiet; then
+              git commit -q -m "Atualiza status da fila"
+              git pull -q --rebase origin main && git push -q origin HEAD:main || true
+            fi
+            sleep 60
+          done
