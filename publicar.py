@@ -24,14 +24,18 @@ def call(method, path, **params):
         raise RuntimeError(e.read().decode()[:500])
 
 def publicar(item):
-    url = RAW + urllib.parse.quote(item["imagem"])
-    p = {"image_url": url}
-    if item["tipo"] == "story":
-        p["media_type"] = "STORIES"
+    if item["tipo"] == "reel":
+        p = {"video_url": RAW + urllib.parse.quote(item["video"]), "media_type": "REELS",
+             "caption": item.get("legenda", ""), "share_to_feed": "true"}
+        if item.get("capa"): p["cover_url"] = RAW + urllib.parse.quote(item["capa"])
     else:
-        p["caption"] = item.get("legenda", "")
+        p = {"image_url": RAW + urllib.parse.quote(item["imagem"])}
+        if item["tipo"] == "story":
+            p["media_type"] = "STORIES"
+        else:
+            p["caption"] = item.get("legenda", "")
     cont = call("POST", f"{IG_ID}/media", **p)["id"]
-    for _ in range(20):
+    for _ in range(60 if item["tipo"] == "reel" else 20):
         st = call("GET", cont, fields="status_code").get("status_code")
         if st == "FINISHED": break
         if st == "ERROR": raise RuntimeError("container com erro")
@@ -70,16 +74,16 @@ def main():
             if quando > agora and not teste: continue
             if agora - quando > JANELA_MAX and not teste:
                 item["status"] = "perdido"; item["obs"] = f"passou da hora ({agora:%d/%m %H:%M})"; mudou = True
-                print("PERDIDO", item["imagem"]); continue
+                print("PERDIDO", item.get("imagem") or item.get("video")); continue
             try:
                 item["media_id"] = publicar(item)
                 item["status"] = "publicado"; item["publicado_em"] = agora.isoformat(timespec="minutes")
-                print("OK", item["tipo"], item["imagem"], item["media_id"])
+                print("OK", item["tipo"], item.get("imagem") or item.get("video"), item["media_id"])
             except Exception as e:
                 item["tentativas"] = item.get("tentativas", 0) + 1
                 item["erro"] = str(e)[:300]
                 if item["tentativas"] >= 3: item["status"] = "perdido"
-                print("ERRO", item["imagem"], e)
+                print("ERRO", item.get("imagem") or item.get("video"), e)
             mudou = True
             if teste: break
         if mudou:
