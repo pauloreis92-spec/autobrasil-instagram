@@ -10,6 +10,7 @@ Regra de ouro: TODO conteúdo legal usa um carro do NOSSO estoque como exemplo, 
 - "Quanto custa manter um ___ em Lages": consumo/seguro/IPVA aproximados com fonte, sempre de um carro do estoque. Conteúdo que as pessoas salvam.
 - "Quem já levou o seu" (sábado): entregas reais. Prova social verdadeira.
 - "Papo de estrada" / nostalgia / carros dos sonhos (domingo): orgulho da serra, clássicos, curiosidades com crédito de foto.
+- "Histórias de quem ama carro" (1 por semana): histórias reais dos seguidores contadas no direct; ver historias/LEIA.md.
 - "Você sabia?" (quinta): dicas positivas que salvam dinheiro.
 
 ## Gatilhos para seguir e compartilhar
